@@ -18,9 +18,28 @@ const app = express();
 
 let trackerProcess = null;
 
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  'https://frontend-tracker-uhjm.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean);
+
 // Enhanced middleware with better security and performance
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://frontend-tracker-uhjm.vercel.app',
+  origin(origin, callback) {
+    // Allow server-to-server tools and health checks that do not send Origin.
+    if (!origin) return callback(null, true);
+
+    const isExactMatch = allowedOrigins.includes(origin);
+    const isVercelPreview = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+
+    if (isExactMatch || isVercelPreview) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
