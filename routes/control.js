@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const CONFIG_PATH = join(__dirname, '../../agent/config.json');
 const FORBIDDEN_PATH = join(__dirname, '../../agent/forbidden.json');
+const DEFAULT_SERVER_URL = process.env.PUBLIC_SERVER_URL || 'https://backend-tracker-0ovf.onrender.com';
 
 // Read config file
 const readConfig = () => {
@@ -20,7 +21,7 @@ const readConfig = () => {
       userId: "default",
       machine: "default",
       trackingInterval: 5000,
-      serverUrl: "http://localhost:5000"
+      serverUrl: DEFAULT_SERVER_URL
     };
   } catch (error) {
     console.error('Error reading config:', error);
@@ -28,7 +29,7 @@ const readConfig = () => {
       userId: "default",
       machine: "default",
       trackingInterval: 5000,
-      serverUrl: "http://localhost:5000"
+      serverUrl: DEFAULT_SERVER_URL
     };
   }
 };

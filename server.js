@@ -20,7 +20,7 @@ let trackerProcess = null;
 
 // Enhanced middleware with better security and performance
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*', // In production, specify exact origins
+  origin: process.env.CORS_ORIGIN || 'https://frontend-tracker-uhjm.vercel.app',
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
