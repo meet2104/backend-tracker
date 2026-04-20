@@ -9,35 +9,56 @@ const __dirname = dirname(__filename);
 const CONFIG_PATH = join(__dirname, '../../agent/config.json');
 const FORBIDDEN_PATH = join(__dirname, '../../agent/forbidden.json');
 const DEFAULT_SERVER_URL = process.env.PUBLIC_SERVER_URL || 'https://backend-tracker-0ovf.onrender.com';
+const DEFAULT_API_URL = `${DEFAULT_SERVER_URL}/api/track/activity`;
+
+const toServerUrl = (value) => {
+  if (!value || typeof value !== 'string') return DEFAULT_SERVER_URL;
+  return value.replace(/\/api\/track\/activity\/?$/i, '');
+};
+
+const normalizeConfig = (raw = {}) => {
+  const serverUrl = raw.serverUrl || toServerUrl(raw.api);
+
+  return {
+    userId: raw.userId || "default",
+    machine: raw.machine || "default",
+    trackingInterval: raw.trackingInterval || 5000,
+    serverUrl,
+    api: raw.api || `${serverUrl}/api/track/activity`
+  };
+};
 
 // Read config file
 const readConfig = () => {
   try {
     if (fs.existsSync(CONFIG_PATH)) {
       const data = fs.readFileSync(CONFIG_PATH, 'utf8');
-      return JSON.parse(data);
+      return normalizeConfig(JSON.parse(data));
     }
-    return {
+    return normalizeConfig({
       userId: "default",
       machine: "default",
       trackingInterval: 5000,
-      serverUrl: DEFAULT_SERVER_URL
-    };
+      serverUrl: DEFAULT_SERVER_URL,
+      api: DEFAULT_API_URL
+    });
   } catch (error) {
     console.error('Error reading config:', error);
-    return {
+    return normalizeConfig({
       userId: "default",
       machine: "default",
       trackingInterval: 5000,
-      serverUrl: DEFAULT_SERVER_URL
-    };
+      serverUrl: DEFAULT_SERVER_URL,
+      api: DEFAULT_API_URL
+    });
   }
 };
 
 // Write config file
 const writeConfig = (config) => {
   try {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+    const normalizedConfig = normalizeConfig(config);
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(normalizedConfig, null, 2));
     return true;
   } catch (error) {
     console.error('Error writing config:', error);
@@ -94,20 +115,22 @@ router.get('/config', (req, res) => {
 // Update configuration
 router.post('/config', (req, res) => {
   try {
-    const { userId, machine, trackingInterval, serverUrl } = req.body;
+    const { userId, machine, trackingInterval, serverUrl, api } = req.body;
     const config = readConfig();
     
     if (userId !== undefined) config.userId = userId;
     if (machine !== undefined) config.machine = machine;
     if (trackingInterval !== undefined) config.trackingInterval = trackingInterval;
     if (serverUrl !== undefined) config.serverUrl = serverUrl;
+    if (api !== undefined) config.api = api;
     
     const success = writeConfig(config);
     
     if (success) {
+      const savedConfig = readConfig();
       res.json({ 
         success: true,
-        config: config,
+        config: savedConfig,
         message: 'Configuration updated successfully'
       });
     } else {
